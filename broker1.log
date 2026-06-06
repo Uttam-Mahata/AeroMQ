@@ -1,0 +1,41 @@
+[2m2026-06-06T03:05:51.670202Z[0m [32m INFO[0m [2mrust_broker[0m[2m:[0m [AeroMQ Broker] Initializing Storage Broker 1...
+[2m2026-06-06T03:05:51.670310Z[0m [32m INFO[0m [2mrust_broker[0m[2m:[0m [AeroMQ Broker] Commit Log Storage: "./data/broker_1"
+[2m2026-06-06T03:05:51.671579Z[0m [32m INFO[0m [2mrust_broker[0m[2m:[0m [AeroMQ Broker] Pinned worker thread 3 to CPU core 3
+[2m2026-06-06T03:05:51.671648Z[0m [32m INFO[0m [2mrust_broker[0m[2m:[0m [AeroMQ Broker] Pinned worker thread 4 to CPU core 4
+[2m2026-06-06T03:05:51.671710Z[0m [32m INFO[0m [2mrust_broker[0m[2m:[0m [AeroMQ Broker] Pinned worker thread 1 to CPU core 1
+[2m2026-06-06T03:05:51.671729Z[0m [32m INFO[0m [2mrust_broker[0m[2m:[0m [AeroMQ Broker] Pinned worker thread 0 to CPU core 0
+[2m2026-06-06T03:05:51.671594Z[0m [32m INFO[0m [2mrust_broker[0m[2m:[0m [AeroMQ Broker] Pinned worker thread 2 to CPU core 2
+[2m2026-06-06T03:05:51.671817Z[0m [32m INFO[0m [2mrust_broker[0m[2m:[0m [AeroMQ Broker] Pinned worker thread 5 to CPU core 5
+[2m2026-06-06T03:05:51.671861Z[0m [32m INFO[0m [2mrust_broker[0m[2m:[0m [AeroMQ Broker] Pinned worker thread 7 to CPU core 7
+[2m2026-06-06T03:05:51.671981Z[0m [32m INFO[0m [2mrust_broker[0m[2m:[0m [AeroMQ Broker] Pinned worker thread 10 to CPU core 10
+[2m2026-06-06T03:05:51.671863Z[0m [32m INFO[0m [2mrust_broker[0m[2m:[0m [AeroMQ Broker] Pinned worker thread 6 to CPU core 6
+[2m2026-06-06T03:05:51.672165Z[0m [32m INFO[0m [2mrust_broker::grpc[0m[2m:[0m [AeroMQ Broker] Connecting to controller at http://127.0.0.1:8001...
+[2m2026-06-06T03:05:51.672206Z[0m [32m INFO[0m [2mrust_broker::net::server[0m[2m:[0m [AeroMQ Broker] Data Plane TCP Server listening on 127.0.0.1:9091
+[2m2026-06-06T03:05:51.672299Z[0m [32m INFO[0m [2mrust_broker[0m[2m:[0m [AeroMQ Broker] Pinned worker thread 9 to CPU core 9
+[2m2026-06-06T03:05:51.671918Z[0m [32m INFO[0m [2mrust_broker[0m[2m:[0m [AeroMQ Broker] Pinned worker thread 8 to CPU core 8
+[2m2026-06-06T03:05:51.672902Z[0m [32m INFO[0m [2mrust_broker[0m[2m:[0m [AeroMQ Broker] Pinned worker thread 11 to CPU core 11
+[2m2026-06-06T03:05:51.673742Z[0m [32m INFO[0m [2mrust_broker::grpc[0m[2m:[0m [AeroMQ Broker] Successfully registered broker 1 with control plane
+[2m2026-06-06T03:05:55.691753Z[0m [32m INFO[0m [2mrust_broker::net::server[0m[2m:[0m [AeroMQ Broker] Accepted connection from 127.0.0.1:56098 on CPU core 9
+[2m2026-06-06T03:05:56.686600Z[0m [32m INFO[0m [2mrust_broker::net::server[0m[2m:[0m [AeroMQ Broker] Accepted connection from 127.0.0.1:56112 on CPU core 9
+[2m2026-06-06T03:05:56.689280Z[0m [32m INFO[0m [2mrust_broker::log::manager[0m[2m:[0m [AeroMQ Broker] Segment 0 rolled over and copied to cold storage: "./data/cold_storage/broker_1/test-integration-1780715153/partition_0/00000000000000000000.log"
+[2m2026-06-06T03:05:57.685556Z[0m [32m INFO[0m [2mrust_broker::net::server[0m[2m:[0m [AeroMQ Broker] Accepted connection from 127.0.0.1:56118 on CPU core 11
+[2m2026-06-06T03:05:57.686557Z[0m [32m INFO[0m [2mrust_broker[0m[2m:[0m [AeroMQ Broker] Pinned worker thread 12 to CPU core 0
+[2m2026-06-06T03:05:59.687062Z[0m [32m INFO[0m [2mrust_broker::net::server[0m[2m:[0m [AeroMQ Broker] Accepted connection from 127.0.0.1:56128 on CPU core 2
+[2m2026-06-06T03:05:59.692098Z[0m [32m INFO[0m [2mrust_broker::net::server[0m[2m:[0m [AeroMQ Broker] Accepted connection from 127.0.0.1:56140 on CPU core 2
+[2m2026-06-06T03:06:01.625215Z[0m [32m INFO[0m [2mrust_broker::net::server[0m[2m:[0m [AeroMQ Broker] Accepted connection from 127.0.0.1:44242 on CPU core 10
+[2m2026-06-06T03:06:01.632209Z[0m [32m INFO[0m [2mrust_broker::net::server[0m[2m:[0m [AeroMQ Broker] Accepted connection from 127.0.0.1:44254 on CPU core 10
+[2m2026-06-06T03:06:02.636061Z[0m [32m INFO[0m [2mrust_broker::net::server[0m[2m:[0m [AeroMQ Broker] Accepted connection from 127.0.0.1:44270 on CPU core 11
+[2m2026-06-06T03:06:03.634028Z[0m [32m INFO[0m [2mrust_broker::net::server[0m[2m:[0m [AeroMQ Broker] Accepted connection from 127.0.0.1:44284 on CPU core 11
+[2m2026-06-06T03:06:03.646316Z[0m [32m INFO[0m [2mrust_broker::net::server[0m[2m:[0m [AeroMQ Broker] Accepted connection from 127.0.0.1:44294 on CPU core 11
+[2m2026-06-06T03:06:04.656862Z[0m [32m INFO[0m [2mrust_broker::net::server[0m[2m:[0m [AeroMQ Broker] Accepted connection from 127.0.0.1:44306 on CPU core 11
+[2m2026-06-06T03:06:05.638493Z[0m [32m INFO[0m [2mrust_broker::net::server[0m[2m:[0m [AeroMQ Broker] Accepted connection from 127.0.0.1:44310 on CPU core 11
+[2m2026-06-06T03:06:05.670149Z[0m [32m INFO[0m [2mrust_broker::net::server[0m[2m:[0m [AeroMQ Broker] Accepted connection from 127.0.0.1:44314 on CPU core 11
+[2m2026-06-06T03:06:06.683971Z[0m [32m INFO[0m [2mrust_broker::net::server[0m[2m:[0m [AeroMQ Broker] Accepted connection from 127.0.0.1:44316 on CPU core 10
+[2m2026-06-06T03:06:07.640583Z[0m [32m INFO[0m [2mrust_broker::net::server[0m[2m:[0m [AeroMQ Broker] Accepted connection from 127.0.0.1:44322 on CPU core 11
+[2m2026-06-06T03:06:07.697314Z[0m [32m INFO[0m [2mrust_broker::net::server[0m[2m:[0m [AeroMQ Broker] Accepted connection from 127.0.0.1:44324 on CPU core 8
+[2m2026-06-06T03:06:08.709234Z[0m [32m INFO[0m [2mrust_broker::net::server[0m[2m:[0m [AeroMQ Broker] Accepted connection from 127.0.0.1:44338 on CPU core 11
+[2m2026-06-06T03:06:09.641984Z[0m [32m INFO[0m [2mrust_broker::net::server[0m[2m:[0m [AeroMQ Broker] Accepted connection from 127.0.0.1:44354 on CPU core 11
+[2m2026-06-06T03:06:09.721059Z[0m [32m INFO[0m [2mrust_broker::net::server[0m[2m:[0m [AeroMQ Broker] Accepted connection from 127.0.0.1:44360 on CPU core 11
+[2m2026-06-06T03:06:10.732429Z[0m [32m INFO[0m [2mrust_broker::net::server[0m[2m:[0m [AeroMQ Broker] Accepted connection from 127.0.0.1:43650 on CPU core 11
+[2m2026-06-06T03:06:11.644274Z[0m [32m INFO[0m [2mrust_broker::net::server[0m[2m:[0m [AeroMQ Broker] Accepted connection from 127.0.0.1:43660 on CPU core 11
+[2m2026-06-06T03:06:11.743673Z[0m [32m INFO[0m [2mrust_broker::net::server[0m[2m:[0m [AeroMQ Broker] Accepted connection from 127.0.0.1:43662 on CPU core 11

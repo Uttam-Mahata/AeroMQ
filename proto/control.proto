@@ -1,0 +1,156 @@
+syntax = "proto3";
+
+package aeromq;
+
+option go_package = "github.com/Uttam-Mahata/aeromq/go-controller/proto/aeromq";
+
+// The ControlService is used by Rust Brokers to report health and receive commands.
+service ControlService {
+  rpc RegisterBroker (RegisterBrokerRequest) returns (RegisterBrokerResponse);
+  rpc Heartbeat (HeartbeatRequest) returns (HeartbeatResponse);
+}
+
+// The DiscoveryService is used by Clients (Producers/Consumers) to discover topology and manage groups.
+service DiscoveryService {
+  rpc GetMetadata (MetadataRequest) returns (MetadataResponse);
+  rpc JoinGroup (JoinGroupRequest) returns (JoinGroupResponse);
+  rpc HeartbeatGroup (HeartbeatGroupRequest) returns (HeartbeatGroupResponse);
+  rpc CommitOffsets (CommitOffsetsRequest) returns (CommitOffsetsResponse);
+  rpc FetchOffsets (FetchOffsetsRequest) returns (FetchOffsetsResponse);
+  rpc CreateTopic (CreateTopicRequest) returns (CreateTopicResponse);
+}
+
+message BrokerInfo {
+  uint32 broker_id = 1;
+  string host = 2;
+  int32 port = 3;
+}
+
+message PartitionAssignment {
+  string topic = 1;
+  uint32 partition = 2;
+  uint32 leader_id = 3;
+  repeated uint32 replica_ids = 4;
+}
+
+// Broker registrations
+message RegisterBrokerRequest {
+  uint32 broker_id = 1;
+  string host = 2;
+  int32 data_port = 3; // The port where the Rust broker listens for TCP data connections
+}
+
+message RegisterBrokerResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+message ReplicaOffset {
+  string topic = 1;
+  uint32 partition = 2;
+  int64 offset = 3;
+}
+
+message HeartbeatRequest {
+  uint32 broker_id = 1;
+  uint64 disk_usage_bytes = 2;
+  uint64 disk_free_bytes = 3;
+  repeated ReplicaOffset replica_offsets = 4;
+}
+
+message HeartbeatResponse {
+  bool success = 1;
+  // The controller sends back the list of partitions this broker is assigned to lead or replicate
+  repeated PartitionAssignment assigned_leaders = 2;
+  repeated PartitionAssignment assigned_followers = 3;
+}
+
+// Metadata queries
+message MetadataRequest {
+  repeated string topics = 1;
+}
+
+message MetadataResponse {
+  repeated BrokerInfo brokers = 1;
+  repeated TopicMetadata topics = 2;
+}
+
+message TopicMetadata {
+  string topic = 1;
+  repeated PartitionMetadata partitions = 2;
+}
+
+message PartitionMetadata {
+  uint32 partition_id = 1;
+  uint32 leader_id = 2;
+  repeated uint32 replica_ids = 3;
+  repeated uint32 isr = 4;
+  int64 high_watermark = 5;
+  map<uint32, int64> replica_offsets = 6;
+}
+
+// Create Topic (for admin/producer discovery facilitation)
+message CreateTopicRequest {
+  string topic = 1;
+  uint32 partitions = 2;
+  uint32 replication_factor = 3;
+}
+
+message CreateTopicResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+// Consumer Group management
+message JoinGroupRequest {
+  string group_id = 1;
+  string member_id = 2; // Empty if joining for the first time
+  repeated string topics = 3;
+}
+
+message JoinGroupResponse {
+  string member_id = 1;
+  uint32 generation_id = 2;
+  repeated PartitionAssignment assignments = 3;
+}
+
+message HeartbeatGroupRequest {
+  string group_id = 1;
+  string member_id = 2;
+  uint32 generation_id = 3;
+}
+
+message HeartbeatGroupResponse {
+  enum Status {
+    OK = 0;
+    REBALANCE_IN_PROGRESS = 1;
+    UNKNOWN_MEMBER = 2;
+  }
+  Status status = 1;
+}
+
+message TopicPartitionOffset {
+  string topic = 1;
+  uint32 partition = 2;
+  int64 offset = 3;
+}
+
+message CommitOffsetsRequest {
+  string group_id = 1;
+  string member_id = 2;
+  uint32 generation_id = 3;
+  repeated TopicPartitionOffset offsets = 4;
+}
+
+message CommitOffsetsResponse {
+  bool success = 1;
+}
+
+message FetchOffsetsRequest {
+  string group_id = 1;
+  repeated string topics = 2;
+}
+
+message FetchOffsetsResponse {
+  repeated TopicPartitionOffset offsets = 1;
+}

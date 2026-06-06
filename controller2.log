@@ -1,0 +1,9 @@
+2026/06/06 08:35:48 [AeroMQ Controller] Starting node node2...
+2026-06-06T08:35:48.660+0530 [INFO]  raft: initial configuration: index=0 servers=[]
+2026-06-06T08:35:48.660+0530 [INFO]  raft: entering follower state: follower="Node at 127.0.0.1:7002 [Follower]" leader-address= leader-id=
+2026/06/06 08:35:48 [AeroMQ Controller] gRPC API server listening on 127.0.0.1:8002
+2026/06/06 08:35:48 [AeroMQ Controller] HTTP API server listening on 127.0.0.1:9002
+2026-06-06T08:35:49.022+0530 [WARN]  raft: no known peers, aborting election
+2026/06/06 08:35:49 [AeroMQ Controller] Attempting to join cluster via http://127.0.0.1:9001/join?id=node2&addr=127.0.0.1:7002
+2026/06/06 08:35:49 [AeroMQ Controller] Successfully joined the Raft cluster!
+2026-06-06T08:35:49.663+0530 [WARN]  raft: failed to get previous log: previous-index=3 last-index=0 error="log not found"

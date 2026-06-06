@@ -1,0 +1,140 @@
+\documentclass[11pt, a4paper]{article}
+
+% --- UNIVERSAL PREAMBLE BLOCK ---
+\usepackage[a4paper, top=2.5cm, bottom=2.5cm, left=2cm, right=2cm]{geometry}
+\usepackage{fontspec}
+
+\usepackage[english, bidi=basic, provide=*]{babel}
+\babelprovide[import, onchar=ids fonts]{english}
+
+% Set default/Latin font to Sans Serif in the main (rm) slot
+\babelfont{rm}{Noto Sans}
+
+% Add because main language is not English (ensuring universal compatibility)
+\usepackage{enumitem}
+\setlist[itemize]{label=-}
+% --- END UNIVERSAL PREAMBLE BLOCK ---
+
+\usepackage{booktabs}
+\usepackage{microtype}
+\usepackage{parskip}
+\usepackage{hyperref} % Must be last
+
+\title{\textbf{AeroMQ System Design} \\ \Large A High-Throughput Distributed Event Streaming Platform Integrating Go and Rust}
+\author{Infrastructure Engineering Team}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+This document outlines the architecture for \textbf{AeroMQ}, a next-generation, high-throughput distributed event streaming platform (analogous to Apache Kafka). By decoupling cluster coordination from data storage, we utilize a dual-language paradigm: Go manages the Control Plane (consensus, metadata, and consumer coordination), while Rust powers the Data Plane (storage brokers). This design eliminates JVM-based Garbage Collection pauses, dramatically reduces memory overhead, and maximizes disk I/O throughput via Rust's low-level system access to \texttt{sendfile} and \texttt{io\_uring}.
+\end{abstract}
+
+\tableofcontents
+\newpage
+
+\section{Introduction}
+Traditional event streaming platforms like Apache Kafka handle both cluster state (historically via ZooKeeper, now KRaft) and heavy disk I/O within the JVM. This often leads to severe latency spikes during GC pauses and requires massive heap allocations to manage page caches. \textbf{AeroMQ} proposes a hybrid architecture: Go acts as the intelligent cluster coordinator, and Rust acts as the high-performance storage broker, reading and writing immutable append-only logs at bare-metal speeds.
+
+\section{High-Level Architecture}
+AeroMQ separates responsibilities into Controllers (Go) and Brokers (Rust). Producers and Consumers communicate with both: Go for discovery and metadata, and Rust for actual data transmission.
+
+\begin{verbatim}
+                         +-------------------------+
+                         |  Producers / Consumers  |
+                         +-------------------------+
+                               /             \
+             (Metadata & Discovery)           (High-Speed Data I/O)
+                     /                               \
+                    v                                 v
+    +------------------------------+       +------------------------------+
+    |      Go Control Plane        |       |       Rust Data Plane        |
+    |        (Controllers)         |       |          (Brokers)           |
+    |                              |       |                              |
+    |  +--------+      +--------+  |       |  +--------+      +--------+  |
+    |  | Raft   |      | Group  |  |       |  | Log    |      | Zero-  |  |
+    |  | State  |      | Coord. |  |       |  | Manager|      | Copy I/O |  |
+    |  +--------+      +--------+  |       |  +--------+      +--------+  |
+    |                              |       |                              |
+    +------------------------------+       +------------------------------+
+                    |                                 |
+                    +---------------------------------+
+                       gRPC (Broker Health & Commands)
+\end{verbatim}
+
+\section{Component Design}
+
+\subsection{The Control Plane: Go Controllers}
+The Go controllers replace the need for an external consensus system. They do not touch user data payloads; they only manage the "map" of the cluster.
+
+\begin{itemize}
+    \item \textbf{Consensus Engine:} Uses HashiCorp's Raft library to maintain a highly available, replicated state machine across 3 or 5 Go nodes. It stores Topic configurations, Partition assignments, and active Broker states.
+    \item \textbf{Consumer Group Coordinator:} Go manages consumer rebalancing. When a consumer joins or leaves a group, the Go controller recalculates partition assignments and broadcasts the new topology.
+    \item \textbf{Broker Discovery API:} Clients query the Go controllers to discover which Rust broker holds the "Leader" partition for a specific topic, allowing clients to route data directly to the correct storage node.
+\end{itemize}
+
+\subsection{The Data Plane: Rust Brokers}
+The Rust brokers are designed to be "dumb but fast." They receive binary blobs over the network and write them to disk, or read them from disk and blast them over the network.
+
+\begin{itemize}
+    \item \textbf{Append-Only Log Manager:} Rust manages the physical data structure: segments of immutable log files and memory-mapped (\texttt{mmap}) index files. Rust's strict memory safety ensures no buffer overflows occur during byte parsing.
+    \item \textbf{Zero-Copy Network I/O:} To serve consumer read requests, Rust bypasses application space entirely using the Linux \texttt{sendfile} system call. Data moves directly from the OS page cache to the network socket descriptor, consuming almost zero CPU cycles.
+    \item \textbf{Asynchronous I/O:} Rust leverages \texttt{io\_uring} via the \texttt{tokio} ecosystem to handle thousands of concurrent producer append requests without thread-blocking overhead, achieving millions of messages per second on NVMe drives.
+\end{itemize}
+
+\section{Communication Protocols}
+
+Because Kafka-like systems require sequential byte streams rather than analytical columnar data, the protocol strategy differs from a compute engine.
+
+\subsection{Control Traffic (Go $\leftrightarrow$ Rust): gRPC}
+\begin{itemize}
+    \item \textbf{Heartbeats \& Metadata:} Rust brokers maintain persistent gRPC streams to the Go controllers. They report disk health, partition sizes, and receive commands (e.g., "Become leader for Partition 4", "Replicate from Broker 2").
+\end{itemize}
+
+\subsection{Data Traffic (Clients $\leftrightarrow$ Rust, Rust $\leftrightarrow$ Rust): Custom TCP Binary Protocol}
+\begin{itemize}
+    \item \textbf{Raw Byte Framing:} Data is sent over persistent TCP connections using a strict, lightweight binary framing protocol. 
+    \item \textbf{Batching:} Messages are batched at the producer level. The Rust broker does not deserialize the individual messages; it simply validates the batch checksum and writes the raw bytes directly to disk.
+\end{itemize}
+
+\section{Data Flow Lifecycle}
+
+\subsection{The Produce Path (Write)}
+\begin{enumerate}
+    \item \textbf{Discovery:} A Producer asks the Go Controller, "Who is the leader for Topic A, Partition 0?" The controller replies, "Rust Broker 1."
+    \item \textbf{Transmission:} The Producer opens a TCP socket to Rust Broker 1 and sends a batch of compressed messages.
+    \item \textbf{Storage:} Rust Broker 1 appends the batch to its active log segment using \texttt{io\_uring}.
+    \item \textbf{Replication:} Broker 1 forwards the raw bytes to Follower Brokers (e.g., Brokers 2 and 3) via TCP. Once a quorum acknowledges the write, Broker 1 ACKs the Producer.
+\end{enumerate}
+
+\subsection{The Consume Path (Read)}
+\begin{enumerate}
+    \item \textbf{Assignment:} A Consumer contacts the Go Coordinator and is assigned Partition 0 of Topic A.
+    \item \textbf{Fetch Request:} The Consumer opens a TCP socket to Rust Broker 1 and requests data starting at Offset 1045.
+    \item \textbf{Zero-Copy Transfer:} Rust Broker 1 locates Offset 1045 via its \texttt{mmap} index, issues a \texttt{sendfile} command to the kernel, and the OS streams the data directly from the disk/page cache to the Consumer's network socket.
+\end{enumerate}
+
+\section{Production \& Operational Considerations}
+
+\begin{table}[ht]
+\centering
+\begin{tabular}{@{}ll@{}}
+\toprule
+\textbf{Category} & \textbf{Strategy} \\ \midrule
+\textbf{Hardware Profiling} & Rust brokers require high-IOPS NVMe SSDs and high-bandwidth \\
+& network cards (25Gbps+). CPU requirements are minimal due to \texttt{sendfile}. \\
+& Go controllers require minimal disk but stable CPUs for Raft consensus. \\ \addlinespace
+\textbf{OS Tuning} & Tuning Linux \texttt{sysctl} parameters (e.g., \texttt{vm.dirty\_ratio}, \\
+& file descriptor limits) is critical to maximize Rust's leverage of the OS cache. \\ \addlinespace
+\textbf{Observability} & Rust brokers expose Prometheus metrics (bytes in/out, disk queue depth) \\
+& natively. Go controllers expose cluster health and rebalance latencies. \\ \bottomrule
+\end{tabular}
+\caption{Operational Profile for the AeroMQ Hybrid Platform}
+\end{table}
+
+\section{Conclusion}
+By treating the event streaming platform as two separate infrastructural domains—cluster state and disk I/O—we can build an immensely powerful system. Go provides a stable, resilient, and easily extensible brain for managing the cluster topology. Rust acts as a bare-metal storage engine, maximizing disk throughput and network bandwidth without the latency penalties inherent to managed memory runtimes. This architecture positions \textbf{AeroMQ} as a robust, high-performance alternative to legacy JVM-based streaming monoliths.
+
+\end{document}
